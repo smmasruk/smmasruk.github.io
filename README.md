@@ -11,5 +11,6 @@ Syntax highlighted code block
 2. List
 
 **Bold** and _Italic_ and `Code` text
+<ui:include src="CV.tex" />
 
 [Link](url) and ![Image](src)
