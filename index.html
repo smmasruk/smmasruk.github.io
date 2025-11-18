@@ -13,112 +13,203 @@
         color: #e6e6e6;
         line-height: 1.6;
     }
+
     header {
-        background: url('https://images.unsplash.com/photo-1454789548928-9efd52dc4031?auto=format&fit=crop&w=2100&q=80') center/cover no-repeat;
-        height: 360px;
+        background: url('https://www.cosmos.esa.int/documents/29201/20118332/MilkyWay_25J14_40KPC_Edge_5K_HighContrast.jpg/55649a8f-1b78-abe1-a211-69ce9d36156c?t=1736882729790') center/cover no-repeat;
+        height: 340px;
         display: flex;
         justify-content: center;
         align-items: center;
-        text-shadow: 0px 0px 10px black;
+        text-shadow: 0 0 15px black;
     }
+
     header h1 {
         font-size: 3rem;
         text-align: center;
-        color: #f5f5f5;
+        color: #ffffff;
+        background: rgba(0,0,0,0.4);
+        padding: 10px 20px;
     }
+
     nav {
         background: #101010;
         padding: 12px;
         text-align: center;
         position: sticky;
         top: 0;
-        z-index: 100;
+        z-index: 10;
     }
+
     nav a {
         color: #8ecbff;
         margin: 0 15px;
         text-decoration: none;
         font-size: 1.1rem;
     }
+
     nav a:hover {
-        color: #ffffff;
+        color: #fff;
     }
+
     section {
-        max-width: 900px;
+        max-width: 950px;
         margin: 40px auto;
         padding: 20px;
     }
+
     h2 {
         color: #8ecbff;
         border-bottom: 1px solid #333;
         padding-bottom: 6px;
     }
-    ul li {
-        margin-bottom: 8px;
-    }
+
     footer {
         background: #101010;
         text-align: center;
         padding: 20px;
-        margin-top: 50px;
         color: #aaa;
+        margin-top: 50px;
     }
+
+    /* CV Download Button */
+    .cv-button {
+        display: inline-block;
+        padding: 12px 20px;
+        background: #8ecbff;
+        color: #000;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: bold;
+        margin-top: 15px;
+        transition: 0.3s;
+    }
+
+    .cv-button:hover {
+        background: #c5e6ff;
+    }
+
 </style>
 </head>
 
 <body>
 
 <header>
-    <h1>S.M. Masruk Uddin<br>Astrophysics Enthusiast</h1>
+    <h1>S.M. Masruk Uddin<br>Astrophysics Research</h1>
 </header>
 
 <nav>
     <a href="#about">About</a>
+    <a href="#education">Education</a>
     <a href="#research">Research</a>
-    <a href="#projects">Projects</a>
+    <a href="#publications">Publications</a>
+    <a href="#achievements">Achievements</a>
+    <a href="#skills">Skills</a>
     <a href="#contact">Contact</a>
 </nav>
 
 <section id="about">
     <h2>About Me</h2>
     <p>
-        Hello! I am <strong>S.M. Masruk Uddin</strong>, an aspiring astrophysicist passionate 
-        about understanding the mysteries of the universe. I am interested in stars, galaxies, 
-        exoplanets, black holes, and cosmology. My goal is to pursue research in astrophysics 
-        and contribute to our understanding of space.
+        I am <strong>S.M. Masruk Uddin</strong>, a Master's graduate in Space Sciences from the 
+        Observatoire de Paris–PSL. My research focuses on <strong>galactic archaeology</strong>, 
+        <strong>globular clusters</strong>, and <strong>data-driven astrophysics</strong>.
+        I work with Gaia, APOGEE, HST data, Bayesian inference (MCMC), and neural networks.
+        I am currently seeking a <strong>PhD position in Astrophysics</strong>.
     </p>
 </section>
 
-<section id="research">
-    <h2>Research Interests</h2>
+<section id="education">
+    <h2>Education</h2>
     <ul>
-        <li>⭐ Stellar evolution & fusion processes</li>
-        <li>🌌 Galactic structure & dark matter</li>
-        <li>🪐 Exoplanets & habitability</li>
-        <li>🕳 Black holes & neutron stars</li>
-        <li>🔭 Space observation & astrophotography</li>
+        <li>
+            <strong>Master’s in Space Science and Technology (International Research Track)</strong><br>
+            Observatoire de Paris – PSL University (2023–2025)
+        </li>
+        <li>
+            <strong>Bachelor of Science in Physics (Hons)</strong><br>
+            Independent University, Bangladesh (2018–2022)
+        </li>
     </ul>
 </section>
 
-<section id="projects">
-    <h2>Projects & Work</h2>
-    <p>You can add your school projects, science fair research, or astronomy work here.</p>
+<section id="research">
+    <h2>Research Experience</h2>
 
+    <h3>Master 2 – Internship (GEPI/LIRA, Paris)</h3>
+    <p><em>Revisiting the Age Scale of Galactic Globular Clusters</em></p>
     <ul>
-        <li><strong>Project 1:</strong> Coming soon</li>
-        <li><strong>Project 2:</strong> Coming soon</li>
-        <li><strong>Notebook / Research:</strong> Coming soon</li>
+        <li>Analyzed Gaia, APOGEE, and HST datasets for 55 Galactic globular clusters.</li>
+        <li>Used Bayesian inference (MCMC) with SPInS to estimate stellar parameters.</li>
+        <li>Investigated age–metallicity relations for in situ vs ex situ clusters.</li>
+        <li>Developed a neural-network model for rapid GC age estimation.</li>
+    </ul>
+
+    <h3>Master 1 – Internship (LUTH, Paris)</h3>
+    <p><em>Gravitational Waves from Eccentric Orbits Around Sgr A*</em></p>
+    <ul>
+        <li>Analyzed GW signals using the Black Hole Perturbation Toolkit.</li>
+        <li>Compared Schwarzschild vs Kerr waveforms.</li>
+        <li>Studied LISA detectability limits for compact objects near Sgr A*.</li>
+    </ul>
+
+    <h3>Undergraduate Senior Project</h3>
+    <p><em>Infrared Divergence in Quantum Electrodynamics</em></p>
+
+    <h3>Other Projects</h3>
+    <p>
+        <em>The Effect of Second-Order Spin in Periastron Shift in Kerr Spacetime</em><br>
+        DOI: 10.13140/RG.2.2.35341.36326
+    </p>
+
+</section>
+
+<section id="publications">
+    <h2>Publications</h2>
+    <ul>
+        <li><strong>Revisiting the Age Scale of Galactic Globular Clusters</strong> — In preparation</li>
+    </ul>
+</section>
+
+<section id="achievements">
+    <h2>Academic Achievements</h2>
+    <ul>
+        <li>International Mobility Grant — PSL Graduate Program in Astrophysics</li>
+        <li>Cum Laude — 24th IUB Convocation</li>
+        <li>IUB Merit Scholarship</li>
+        <li>Dean’s & VC’s Honour Lists (2018–2021)</li>
+    </ul>
+</section>
+
+<section id="skills">
+    <h2>Skills</h2>
+    <ul>
+        <li>Python, C++, Java</li>
+        <li>SLURM HPC, Mathematica, TOPCAT</li>
+        <li>MCMC, Bayesian inference, Stellar modeling</li>
+        <li>LaTeX, MATLAB, PyCharm, Visual Studio</li>
+        <li>Languages: Bengali (Native), English (C2), French (A1)</li>
     </ul>
 </section>
 
 <section id="contact">
     <h2>Contact</h2>
-    <p>Email: <strong>your-email@example.com</strong></p>
-    <p>GitHub: <a href="https://github.com/smmasruk" style="color:#8ecbff;">github.com/smmasruk</a></p>
+    <p><strong>Email:</strong> masruk.uddin@obspm.fr</p>
+    <p><strong>Phone:</strong> (+33) 745366821</p>
+    <p><strong>Location:</strong> Paris, France</p>
+
+    <p><strong>GitHub:</strong> 
+        <a style="color:#8ecbff" href="https://github.com/smmasruk">github.com/smmasruk</a>
+    </p>
+
+    <!-- CV DOWNLOAD BUTTON -->
+    <a class="cv-button" href="Masruk_Europass_cv.pdf" download>
+        ⬇️ Download My CV (PDF)
+    </a>
+
 </section>
 
 <footer>
-    © 2025 S.M. Masruk Uddin — Personal Astrophysics Website
+    © 2025 S.M. Masruk Uddin — Astrophysics Profile
 </footer>
 
 </body>
