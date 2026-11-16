@@ -66,9 +66,74 @@
   if (!cv || !cv.getContext) return;
   var ctx = cv.getContext('2d');
   var W = 0, H = 0, dpr = 1, stars = [], parts = [], running = false, raf = 0, t = 0, last = 0;
+  var MWPAD = 24, mw = document.createElement('canvas'), mctx = mw.getContext('2d');
   var hero = cv.parentElement;
 
   function rand(a, b) { return a + Math.random() * (b - a); }
+
+  function gauss() { return (Math.random() + Math.random() + Math.random() + Math.random() - 2) / 2; }
+
+  /* Milky Way: a static procedural band, painted once per resize on an offscreen canvas. */
+  function buildMW() {
+    var wide = W > 860, pw = W + MWPAD * 2, ph = H + MWPAD * 2;
+    mw.width = Math.round(pw * dpr); mw.height = Math.round(ph * dpr);
+    mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    mctx.clearRect(0, 0, pw, ph);
+
+    var ang = wide ? -0.40 : -1.0;
+    var dx = Math.cos(ang), dy = Math.sin(ang), px = -dy, py = dx;
+    var cx = pw * 0.5, cy = ph * 0.52;
+    var L = Math.hypot(pw, ph) * 1.1;
+    var sig = wide ? ph * 0.20 : pw * 0.30;
+    var bulge = L * 0.24;                          /* galactic-centre bulge, offset along the band */
+    var i, s, n, x, y, r, a, c, gr;
+
+    /* 1. diffuse glow: many large soft blobs along the band (additive) */
+    mctx.globalCompositeOperation = 'lighter';
+    for (i = 0; i < 110; i++) {
+      s = (Math.random() - 0.5) * L; n = gauss() * sig * 0.6;
+      x = cx + dx * s + px * n; y = cy + dy * s + py * n;
+      r = sig * (0.45 + Math.random() * 0.9);
+      var near = Math.exp(-Math.pow((s - bulge) / (L * 0.16), 2));   /* 0..1, strongest at the bulge */
+      var k = Math.random();
+      c = k < 0.5 ? '150,178,235' : k < 0.8 ? '205,212,236' : '255,208,160';
+      if (near > 0.35 && Math.random() < 0.6) c = '255,214,170';
+      a = (0.028 + Math.random() * 0.04) * (0.7 + near * 1.1);
+      gr = mctx.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, 'rgba(' + c + ',' + a.toFixed(3) + ')'); gr.addColorStop(1, 'rgba(' + c + ',0)');
+      mctx.fillStyle = gr; mctx.beginPath(); mctx.arc(x, y, r, 0, 6.2832); mctx.fill();
+    }
+    /* bright core */
+    x = cx + dx * bulge; y = cy + dy * bulge;
+    gr = mctx.createRadialGradient(x, y, 0, x, y, sig * 1.25);
+    gr.addColorStop(0, 'rgba(255,226,190,0.20)'); gr.addColorStop(0.5, 'rgba(255,200,150,0.07)'); gr.addColorStop(1, 'rgba(255,200,150,0)');
+    mctx.fillStyle = gr; mctx.beginPath(); mctx.arc(x, y, sig * 1.25, 0, 6.2832); mctx.fill();
+
+    /* 2. dust lanes: dark, stretched blobs along the band */
+    mctx.globalCompositeOperation = 'source-over';
+    for (i = 0; i < 46; i++) {
+      s = (Math.random() - 0.5) * L; n = gauss() * sig * 0.22;
+      x = cx + dx * s + px * n; y = cy + dy * s + py * n;
+      r = sig * (0.25 + Math.random() * 0.45);
+      mctx.save(); mctx.translate(x, y); mctx.rotate(ang + (Math.random() - 0.5) * 0.35);
+      mctx.scale(2.2 + Math.random() * 2.6, 0.32 + Math.random() * 0.25);
+      gr = mctx.createRadialGradient(0, 0, 0, 0, 0, r);
+      gr.addColorStop(0, 'rgba(4,5,8,' + (0.30 + Math.random() * 0.22).toFixed(2) + ')'); gr.addColorStop(1, 'rgba(4,5,8,0)');
+      mctx.fillStyle = gr; mctx.beginPath(); mctx.arc(0, 0, r, 0, 6.2832); mctx.fill();
+      mctx.restore();
+    }
+
+    /* 3. the dense, faint stars that make the band grainy */
+    var count = Math.min(5200, Math.round(pw * ph / 160));
+    for (i = 0; i < count; i++) {
+      s = (Math.random() - 0.5) * L; n = gauss() * sig * 0.62;
+      x = cx + dx * s + px * n; y = cy + dy * s + py * n;
+      var w = Math.random() < 0.12 ? 1.4 : 0.8;
+      var warm = Math.random();
+      mctx.fillStyle = 'rgba(' + (warm < 0.2 ? '255,226,190' : warm < 0.4 ? '185,210,255' : '232,238,255') + ',' + (0.10 + Math.random() * 0.45).toFixed(2) + ')';
+      mctx.fillRect(x, y, w, w);
+    }
+  }
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -86,6 +151,7 @@
         c: warm < 0.14 ? '255,224,180' : warm < 0.3 ? '190,215,255' : '235,240,255'
       });
     }
+    buildMW();
     if (reduce) draw(0);
   }
 
@@ -108,6 +174,8 @@
   function draw(dt) {
     t += dt;
     ctx.clearRect(0, 0, W, H);
+    var dxm = reduce ? 0 : Math.sin(t * 0.04) * 6, dym = reduce ? 0 : Math.cos(t * 0.03) * 4;
+    ctx.drawImage(mw, -MWPAD + dxm, -MWPAD + dym, W + MWPAD * 2, H + MWPAD * 2);
 
     /* stars */
     for (var i = 0; i < stars.length; i++) {
@@ -186,7 +254,7 @@
     ctx.fillStyle = 'rgba(123,130,148,0.9)';
     ctx.font = '10.5px "JetBrains Mono", monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('INTERACTING BINARY · MASS TRANSFER · SCHEMATIC', g.cx, Math.min(H - 70, g.cy + a * 0.95));
+    if (W > 860) ctx.fillText('INTERACTING BINARY · MASS TRANSFER · SCHEMATIC', g.cx, Math.min(H - 70, g.cy + a * 0.95));
   }
 
   function loop(now) {
