@@ -8,8 +8,6 @@ assets/style.css    styling and design tokens
 assets/main.js      starfield + interacting-binary animation, nav, scroll effects
 assets/fonts.css    self-hosted @font-face rules
 assets/fonts/       Instrument Serif, Newsreader, JetBrains Mono (woff2)
-Masruk_CV.pdf       linked from the "Download CV" buttons
-Masruk_Europass_cv.pdf
 ```
 
 ## Preview locally
@@ -27,4 +25,3 @@ then hard-refresh https://smmasruk.github.io (Ctrl/Cmd + Shift + R).
 
 - **Text, publications, dates:** edit `index.html`. Each section has an `id` and a `§ 0N` number.
 - **Colours and fonts:** the `:root` variables at the top of `assets/style.css`.
-- **New CV:** replace `Masruk_CV.pdf` keeping the exact filename (GitHub Pages is case-sensitive).
