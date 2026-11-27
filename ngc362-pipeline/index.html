@@ -325,7 +325,7 @@ function drawHistogram(binIdx){
   const p99=cols[Math.floor(cols.length*0.99)];
   const HBINS=50,hStep=(p99-p1)/HBINS;
   const counts=new Array(HBINS).fill(0);
-  cols.forEach(c=>{const b=Math.min(HBINS-1,Math.floor((c-p1)/hStep));counts[b]++;});
+  cols.forEach(c=>{if(c<p1||c>p99)return;const b=Math.min(HBINS-1,Math.floor((c-p1)/hStep));counts[b]++;});
   const maxC=Math.max(...counts);
   const pad={l:30,r:10,t:24,b:34};
   const W=ZW-pad.l-pad.r,H=ZH-pad.t-pad.b;
@@ -398,26 +398,27 @@ return [
   {
     num:'01',title:'NGC 0362 — Raw HUGS Photometry',
     body:`<p>This is the real HUGS Meth2 catalogue for <strong>NGC 0362</strong>, a globular cluster in the southern constellation Tucana.</p>
-<p><strong>143,280 sources</strong> detected in F606W + F814W by HST/ACS. Each dot is one source — stars, blended sources, cosmic rays, field objects, everything.</p>
-<p>You can clearly see the main sequence, the subgiant branch, and the red giant branch. But there's a lot of contamination to remove.</p>`,
+<p><strong>144,320 sources</strong> detected in F606W + F814W by HST/ACS (Piotto et al. 2015; Nardiello et al. 2018). Each dot is one source — stars, blended sources, cosmic rays, field objects, everything.</p>
+<p>You can clearly see the main sequence, the subgiant branch, and the red giant branch. But there's a lot of contamination to remove.</p>
+<p style="font-size:11px;color:var(--fg2)">Data: HUGS — HST UV Globular Cluster Survey, Meth2 photometry. Piotto et al. 2015, AJ, 149, 91 · Nardiello et al. 2018, MNRAS, 481, 3382.</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
       plotStars(stars,starCol(0.3),1.2);
-      label(ctx,'N = 143,280 raw sources (8k shown)',PAD.l+CW-8,PAD.t+14,T.fg2,'right');
+      label(ctx,'N = 144,320 raw sources (8k bad + all 37k good shown)',PAD.l+CW-8,PAD.t+14,T.fg2,'right');
     },zoom:null
   },
   {
     num:'02',title:'Quality Cuts — 6 Criteria',
-    body:`<p><span style="color:var(--bad)">■</span> <strong>Removed</strong> (74%): bad PSF fit, blends, field stars, cosmic rays.<br>
-<span style="color:var(--accent2)">■</span> <strong>Kept — 37,294 sources</strong> (26%): all 6 criteria satisfied.</p>
+    body:`<p><span style="color:var(--bad)">■</span> <strong>Removed — 107,277 sources</strong> (74%): bad PSF fit, blends, field stars, cosmic rays.<br>
+<span style="color:var(--accent2)">■</span> <strong>Kept — 37,043 sources</strong> (26%): all 6 criteria satisfied.</p>
 <p>Cuts applied: <code>qfit ≥ 0.98</code>, <code>|sharp| ≤ 0.05</code>, <code>Pmem ≥ 90%</code>, detected in both filters, <code>−1 ≤ colour ≤ 3</code>, <code>10 ≤ F814W ≤ 25</code>.</p>
-<p>Display is subsampled at the real 74/26 ratio so the visual density is representative.</p>`,
+<p>All 37,043 quality-cut stars are shown. The 8,000 removed (red) dots are a random subsample of the 107,277 removed sources, so red looks much sparser here than in the real 74/26 split.</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
       plotStars(stars.filter(s=>s.flag===0),rgba('bad',0.45),1.2);
       plotStars(stars.filter(s=>s.flag>=1),rgba('kept',0.75),1.5);
-      label(ctx,'■ removed (74%)',PAD.l+CW-8,PAD.t+14,rgba('bad'),'right',fs(),true);
-      label(ctx,'■ kept (26%)',PAD.l+CW-8,PAD.t+14+fs()*1.7,rgba('kept'),'right',fs(),true);
+      label(ctx,'■ removed (107,277)',PAD.l+CW-8,PAD.t+14,rgba('bad'),'right',fs(),true);
+      label(ctx,'■ kept (37,043)',PAD.l+CW-8,PAD.t+14+fs()*1.7,rgba('kept'),'right',fs(),true);
     },zoom:null
   },
   {
@@ -440,7 +441,7 @@ return [
       ctx.clearRect(0,0,VW,VH);drawAxes();
       drawBinLines(0.15);
       plotStars(stars.filter(s=>s.flag>=1),rgba('kept',0.35),1.1);
-      const exIdx=Math.floor(rbins.length*0.45);
+      const exIdx=35;  // F814W 19.825
       const exM=rbins[exIdx][0],exC=rbins[exIdx][1];
       const y0=cy(exM-0.075),y1=cy(exM+0.075);
       ctx.save();ctx.globalAlpha=0.2;ctx.fillStyle=rgba('orange');
@@ -454,14 +455,14 @@ return [
       label(ctx,`modal colour=${exC.toFixed(3)}`,lx,ly,rgba('orange'),'left',fs(),true);
     },
     zoom(){
-      drawHistogram(Math.floor(rbins.length*0.45));
+      drawHistogram(35);
       document.getElementById('zoomLabel').textContent='Real NGC 0362 histogram — 50 colour bins, one 0.15-mag strip';
     }
   },
   {
     num:'05',title:'Ridge Line C_ridge(m)',
-    body:`<p>Collecting one modal colour per bin and smoothing with a <strong>univariate spline</strong> (s = 0.002) gives the continuous function C<sub>ridge</sub>(m) — the <span style="color:var(--ridge)">red curve</span>.</p>
-<p><span style="color:var(--orange)">Orange dots</span> are the raw modal points; the spline interpolates through them smoothly.</p>
+    body:`<p>Collecting one modal colour per bin and fitting a <strong>smoothing spline</strong> (scipy UnivariateSpline, s = 0.002) gives the continuous function C<sub>ridge</sub>(m) — the <span style="color:var(--ridge)">red curve</span>.</p>
+<p><span style="color:var(--orange)">Orange dots</span> are the raw modal points. The spline <em>smooths</em> them (it does not pass exactly through each point), and may zigzag at the bright end where bins have few stars.</p>
 <p>This ridge traces the spine of the main sequence through every magnitude level.</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
@@ -492,8 +493,8 @@ return [
     num:'07',title:'Ridge-Line Distance Criterion',
     body:`<p>A star at magnitude m<sub>i</sub> is selected if:</p>
 <p><code>|c_i − C_ridge(m_i)| ≤ 0.04 mag</code></p>
-<p>The <span style="color:var(--accent2)">green corridor</span> is exactly ±0.04 mag on each side of the ridge. 0.04 mag ≈ 2× the median MSTO colour error.</p>
-<p><strong>20,613 stars</strong> pass this criterion in the full NGC 0362 dataset (displayed sample: ${nSel.toLocaleString()}).</p>`,
+<p>The <span style="color:var(--accent2)">green corridor</span> is exactly ±0.04 mag on each side of the ridge. The median colour error near the turn-off is σ<sub>c</sub> ≈ 0.008 mag, so the half-width is ≈ 4.9 σ<sub>c</sub>.</p>
+<p><strong>20,517 stars</strong> pass this criterion in the full NGC 0362 dataset (displayed sample: ${nSel.toLocaleString()}).</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
       drawMagWindow();drawCorridor();
@@ -520,7 +521,7 @@ return [
     num:'09',title:'20 Equal-Width Bins + 2D Bootstrap KDE',
     body:`<p>The MS sample is divided into <strong>20 equal-width bins</strong> (<span style="color:var(--gold)">yellow lines</span>), each ~${((MSTO_M+2.5-(MSTO_M-1))/20).toFixed(3)} mag wide.</p>
 <p>In each bin: <strong>500 bootstrap iterations</strong>, each perturbing star colours by their photometric errors, then a 2D Gaussian KDE on a 100×100 grid to find the density peak.</p>
-<p>The zoom shows the real KDE density map + median peak (<span style="color:var(--gold)">gold circle</span>) for one fiducial bin.</p>`,
+<p>The zoom shows a browser approximation of the KDE density map + median peak (<span style="color:var(--gold)">gold circle</span>) for one fiducial bin.</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
       plotStars(stars.filter(s=>s.flag===1),rgba('muted',0.2),1.0);
@@ -529,7 +530,7 @@ return [
     },
     zoom(){
       drawFidKDE(Math.floor(fid.length/2));
-      document.getElementById('zoomLabel').textContent=`Real NGC 0362 — 2D KDE in fiducial bin ${Math.floor(fid.length/2)+1}/20`;
+      document.getElementById('zoomLabel').textContent=`Browser approximation of KDE — fiducial bin ${Math.floor(fid.length/2)+1}/20 (real KDE uses 500 bootstraps in Python)`;
     }
   },
   {
