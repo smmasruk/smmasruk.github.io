@@ -13,7 +13,7 @@
   --accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--bad:#f85149;
   --axis:#484f58;--fg-rgb:230,237,243;--surface-rgb:22,27,34;
   --star-rgb:180,210,255;--star-boost:1;--blue-rgb:88,166,255;--kept-rgb:63,185,80;
-  --orange-rgb:255,166,87;--ridge-rgb:255,123,114;--gold-rgb:255,215,0;
+  --orange-rgb:255,166,87;--bad-rgb:248,81,73;--muted-rgb:140,160,180;--ridge-rgb:255,123,114;--gold-rgb:255,215,0;
   color-scheme:dark;
 }
 @media(prefers-color-scheme:light){:root:not([data-theme="dark"]){
@@ -21,7 +21,7 @@
   --accent:#0969da;--accent2:#1a7f37;--warn:#9a6700;--bad:#cf222e;
   --axis:#8c959f;--fg-rgb:31,35,40;--surface-rgb:255,255,255;
   --star-rgb:20,50,120;--star-boost:1.5;--blue-rgb:9,105,218;--kept-rgb:26,127,55;
-  --orange-rgb:188,76,0;--ridge-rgb:207,34,46;--gold-rgb:166,118,0;
+  --orange-rgb:188,76,0;--bad-rgb:207,34,46;--muted-rgb:60,76,98;--ridge-rgb:207,34,46;--gold-rgb:166,118,0;
   color-scheme:light;
 }}
 :root[data-theme="light"]{
@@ -29,7 +29,7 @@
   --accent:#0969da;--accent2:#1a7f37;--warn:#9a6700;--bad:#cf222e;
   --axis:#8c959f;--fg-rgb:31,35,40;--surface-rgb:255,255,255;
   --star-rgb:20,50,120;--star-boost:1.5;--blue-rgb:9,105,218;--kept-rgb:26,127,55;
-  --orange-rgb:188,76,0;--ridge-rgb:207,34,46;--gold-rgb:166,118,0;
+  --orange-rgb:188,76,0;--bad-rgb:207,34,46;--muted-rgb:60,76,98;--ridge-rgb:207,34,46;--gold-rgb:166,118,0;
   color-scheme:light;
 }
 :root{--orange:rgb(var(--orange-rgb));--gold:rgb(var(--gold-rgb));--ridge:rgb(var(--ridge-rgb))}
@@ -140,7 +140,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 let stars, ridge, fid, rbins, MSTO_M, MSTO_C;
 
 function init(D) {
-  stars  = D.stars.map(r => ({c:r[0], m:r[1], ec:r[2], sel:r[3]===1}));
+  // flag: 0=failed QC, 1=passed QC not ridge-selected, 2=ridge-selected
+  stars  = D.stars.map(r => ({c:r[0], m:r[1], ec:r[2], flag:r[3]}));
   ridge  = D.ridge;
   fid    = D.fid;
   rbins  = D.rbins;
@@ -160,7 +161,7 @@ const T={};                                    // theme colours read from CSS
 function readTheme(){
   const st=getComputedStyle(document.documentElement);
   ['fg2','axis','fg-rgb','surface-rgb','star-rgb','star-boost','blue-rgb','kept-rgb',
-   'orange-rgb','ridge-rgb','gold-rgb','accent'].forEach(n=>T[n]=st.getPropertyValue('--'+n).trim());
+   'orange-rgb','bad-rgb','muted-rgb','ridge-rgb','gold-rgb','accent'].forEach(n=>T[n]=st.getPropertyValue('--'+n).trim());
 }
 const rgba=(name,a=1)=>`rgba(${T[name+'-rgb']},${a})`;
 const starCol=a=>rgba('star',Math.min(0.9,a*Number(T['star-boost'])));
@@ -351,7 +352,7 @@ function drawHistogram(binIdx){
 
 function drawFidKDE(fidIdx){
   const f=fid[fidIdx];
-  const inBin=stars.filter(s=>s.m>=f[4]&&s.m<f[5]&&s.sel);
+  const inBin=stars.filter(s=>s.m>=f[4]&&s.m<f[5]&&s.flag===2);
   if(!inBin.length)return;
   const cols=inBin.map(s=>s.c),mags=inBin.map(s=>s.m);
   const c0=Math.min(...cols)-0.03,c1=Math.max(...cols)+0.03;
@@ -389,7 +390,9 @@ function drawFidKDE(fidIdx){
 
 // ── step definitions ──────────────────────────────────────────────────────────
 function makeSteps(){
-const nSel = stars.filter(s=>s.sel).length;
+const nBad  = stars.filter(s=>s.flag===0).length;
+const nGood = stars.filter(s=>s.flag>=1).length;
+const nSel  = stars.filter(s=>s.flag===2).length;
 return [
   {
     num:'01',title:'NGC 0362 — Raw HUGS Photometry',
@@ -399,20 +402,21 @@ return [
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
       plotStars(stars,starCol(0.3),1.2);
-      label(ctx,'N = 143,280 raw sources',PAD.l+CW-8,PAD.t+14,T.fg2,'right');
+      label(ctx,'N = 143,280 raw sources (8k shown)',PAD.l+CW-8,PAD.t+14,T.fg2,'right');
     },zoom:null
   },
   {
     num:'02',title:'Quality Cuts — 6 Criteria',
-    body:`<p><span style="color:var(--bad)">■</span> <strong>Removed</strong>: bad PSF fit, blends, field stars, saturated, bad magnitudes.<br>
-<span style="color:var(--accent2)">■</span> <strong>Kept</strong>: all 6 quality criteria satisfied.</p>
+    body:`<p><span style="color:var(--bad)">■</span> <strong>Removed</strong> (${nBad.toLocaleString()} shown): bad PSF fit, blends, field stars, saturated.<br>
+<span style="color:var(--accent2)">■</span> <strong>Kept</strong> (${nGood.toLocaleString()} shown): all 6 criteria satisfied.</p>
 <p>Cuts applied: <code>qfit ≥ 0.98</code>, <code>|sharp| ≤ 0.05</code>, <code>Pmem ≥ 90%</code>, detected in both filters, <code>−1 ≤ colour ≤ 3</code>, <code>10 ≤ F814W ≤ 25</code>.</p>
-<p>26% of sources survive: <strong>37,294 high-quality stars</strong>.</p>`,
+<p>26% of sources survive: <strong>37,294 high-quality stars</strong> from 143,280 total.</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
-      plotStars(stars.filter(s=>!s.sel),starCol(0.15),1.0);
-      plotStars(stars.filter(s=>s.sel),rgba('kept',0.65),1.5);
-      label(ctx,'N = 37,294 after cuts',PAD.l+CW-8,PAD.t+14,rgba('kept'),'right',fs(),true);
+      plotStars(stars.filter(s=>s.flag===0),rgba('bad',0.55),1.3);
+      plotStars(stars.filter(s=>s.flag>=1),rgba('kept',0.65),1.5);
+      label(ctx,'■ removed',PAD.l+CW-8,PAD.t+14,rgba('bad'),'right',fs(),true);
+      label(ctx,'■ kept',PAD.l+CW-8,PAD.t+14+fs()*1.7,rgba('kept'),'right',fs(),true);
     },zoom:null
   },
   {
@@ -423,7 +427,7 @@ return [
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
       drawBinLines(0.4);
-      plotStars(stars,starCol(0.4),1.2);
+      plotStars(stars.filter(s=>s.flag>=1),rgba('kept',0.4),1.2);
     },zoom:null
   },
   {
@@ -434,7 +438,7 @@ return [
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
       drawBinLines(0.15);
-      plotStars(stars,starCol(0.3),1.1);
+      plotStars(stars.filter(s=>s.flag>=1),rgba('kept',0.35),1.1);
       const exIdx=Math.floor(rbins.length*0.45);
       const exM=rbins[exIdx][0],exC=rbins[exIdx][1];
       const y0=cy(exM-0.075),y1=cy(exM+0.075);
@@ -460,7 +464,7 @@ return [
 <p>This ridge traces the spine of the main sequence through every magnitude level.</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
-      plotStars(stars,starCol(0.3),1.1);
+      plotStars(stars.filter(s=>s.flag>=1),rgba('kept',0.35),1.1);
       ctx.fillStyle=rgba('orange',0.9);
       rbins.forEach(([m,c])=>{ctx.beginPath();ctx.arc(cx(c),cy(m),2.8*K,0,2*Math.PI);ctx.fill();});
       drawRidge(rgba('ridge'));
@@ -492,8 +496,8 @@ return [
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
       drawMagWindow();drawCorridor();
-      plotStars(stars.filter(s=>!s.sel),starCol(0.15),1.0);
-      plotStars(stars.filter(s=>s.sel),rgba('kept',0.75),1.8);
+      plotStars(stars.filter(s=>s.flag!==2),rgba('muted',0.2),1.0);
+      plotStars(stars.filter(s=>s.flag===2),rgba('kept',0.75),1.8);
       drawRidge(rgba('ridge',0.7));
     },zoom:null
   },
@@ -506,8 +510,8 @@ return [
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
       drawMagWindow();drawCorridor();
-      plotStars(stars.filter(s=>!s.sel),starCol(0.1),1.0);
-      plotStars(stars.filter(s=>s.sel),rgba('kept',0.8),1.8);
+      plotStars(stars.filter(s=>s.flag!==2),starCol(0.1),1.0);
+      plotStars(stars.filter(s=>s.flag===2),rgba('kept',0.8),1.8);
       drawRidge(rgba('ridge',0.6));drawMSTO();
     },zoom:null
   },
@@ -518,8 +522,8 @@ return [
 <p>The zoom shows the real KDE density map + median peak (<span style="color:var(--gold)">gold circle</span>) for one fiducial bin.</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
-      plotStars(stars.filter(s=>!s.sel),starCol(0.08),1.0);
-      plotStars(stars.filter(s=>s.sel),rgba('kept',0.5),1.5);
+      plotStars(stars.filter(s=>s.flag!==2),rgba('muted',0.12),1.0);
+      plotStars(stars.filter(s=>s.flag===2),rgba('kept',0.5),1.5);
       drawFidBinLines();drawRidge(rgba('ridge',0.5));
     },
     zoom(){
@@ -538,8 +542,8 @@ return [
 <p>These 20 points + the Salaris-rescaled [M/H] from APOGEE are written directly into <strong>SPInS</strong> as observational constraints. SPInS then runs MCMC (10 temperature chains, 80 walkers, 55k steps) to fit age, distance, and reddening simultaneously.</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
-      plotStars(stars.filter(s=>!s.sel),starCol(0.08),1.0);
-      plotStars(stars.filter(s=>s.sel),rgba('kept',0.35),1.4);
+      plotStars(stars.filter(s=>s.flag!==2),rgba('muted',0.12),1.0);
+      plotStars(stars.filter(s=>s.flag===2),rgba('kept',0.35),1.4);
       drawRidge(rgba('ridge',0.4));drawFidBinLines();drawFidPoints();
     },zoom:null
   }
