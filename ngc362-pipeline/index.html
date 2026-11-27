@@ -317,7 +317,8 @@ function sizeZoom(){
 
 function drawHistogram(binIdx){
   const binM=rbins[binIdx][0], BW=0.15;
-  const inBin=stars.filter(s=>s.m>=binM-BW/2&&s.m<binM+BW/2);
+  // only quality-cut stars (flag>=1) go into the histogram — same as the paper
+  const inBin=stars.filter(s=>s.flag>=1&&s.m>=binM-BW/2&&s.m<binM+BW/2);
   if(!inBin.length)return;
   const cols=inBin.map(s=>s.c).sort((a,b)=>a-b);
   const p1=cols[Math.floor(cols.length*0.01)];
@@ -407,16 +408,16 @@ return [
   },
   {
     num:'02',title:'Quality Cuts — 6 Criteria',
-    body:`<p><span style="color:var(--bad)">■</span> <strong>Removed</strong> (${nBad.toLocaleString()} shown): bad PSF fit, blends, field stars, saturated.<br>
-<span style="color:var(--accent2)">■</span> <strong>Kept</strong> (${nGood.toLocaleString()} shown): all 6 criteria satisfied.</p>
+    body:`<p><span style="color:var(--bad)">■</span> <strong>Removed</strong> (74%): bad PSF fit, blends, field stars, cosmic rays.<br>
+<span style="color:var(--accent2)">■</span> <strong>Kept — 37,294 sources</strong> (26%): all 6 criteria satisfied.</p>
 <p>Cuts applied: <code>qfit ≥ 0.98</code>, <code>|sharp| ≤ 0.05</code>, <code>Pmem ≥ 90%</code>, detected in both filters, <code>−1 ≤ colour ≤ 3</code>, <code>10 ≤ F814W ≤ 25</code>.</p>
-<p>26% of sources survive: <strong>37,294 high-quality stars</strong> from 143,280 total.</p>`,
+<p>Display is subsampled at the real 74/26 ratio so the visual density is representative.</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
-      plotStars(stars.filter(s=>s.flag===0),rgba('bad',0.55),1.3);
-      plotStars(stars.filter(s=>s.flag>=1),rgba('kept',0.65),1.5);
-      label(ctx,'■ removed',PAD.l+CW-8,PAD.t+14,rgba('bad'),'right',fs(),true);
-      label(ctx,'■ kept',PAD.l+CW-8,PAD.t+14+fs()*1.7,rgba('kept'),'right',fs(),true);
+      plotStars(stars.filter(s=>s.flag===0),rgba('bad',0.45),1.2);
+      plotStars(stars.filter(s=>s.flag>=1),rgba('kept',0.75),1.5);
+      label(ctx,'■ removed (74%)',PAD.l+CW-8,PAD.t+14,rgba('bad'),'right',fs(),true);
+      label(ctx,'■ kept (26%)',PAD.l+CW-8,PAD.t+14+fs()*1.7,rgba('kept'),'right',fs(),true);
     },zoom:null
   },
   {
@@ -444,7 +445,7 @@ return [
       const y0=cy(exM-0.075),y1=cy(exM+0.075);
       ctx.save();ctx.globalAlpha=0.2;ctx.fillStyle=rgba('orange');
       ctx.fillRect(PAD.l,Math.min(y0,y1),CW,Math.abs(y1-y0));ctx.restore();
-      plotStars(stars.filter(s=>s.m>=exM-0.075&&s.m<exM+0.075),rgba('orange',0.9),2);
+      plotStars(stars.filter(s=>s.flag>=1&&s.m>=exM-0.075&&s.m<exM+0.075),rgba('orange',0.9),2);
       const mx=cx(exC),my=cy(exM),lx=cx(0.84),ly=my+34*K;
       ctx.strokeStyle=rgba('orange');ctx.lineWidth=1;
       ctx.beginPath();ctx.moveTo(mx,my);ctx.lineTo(lx-4,ly);ctx.stroke();
@@ -477,7 +478,7 @@ return [
 <p>For NGC 0362: <strong>MSTO at F814W = ${MSTO_M.toFixed(2)} mag</strong>, colour = ${MSTO_C.toFixed(3)}.</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
-      plotStars(stars,starCol(0.3),1.1);
+      plotStars(stars.filter(s=>s.flag>=1),rgba('kept',0.35),1.1);
       ctx.save();ctx.globalAlpha=0.07;ctx.fillStyle=rgba('orange');
       ctx.fillRect(PAD.l,cy(MSTO_M-2),CW,cy(MSTO_M+2)-cy(MSTO_M-2));ctx.restore();
       ctx.strokeStyle=rgba('orange',0.55);ctx.lineWidth=1;ctx.setLineDash([4,4]);
@@ -492,11 +493,11 @@ return [
     body:`<p>A star at magnitude m<sub>i</sub> is selected if:</p>
 <p><code>|c_i − C_ridge(m_i)| ≤ 0.04 mag</code></p>
 <p>The <span style="color:var(--accent2)">green corridor</span> is exactly ±0.04 mag on each side of the ridge. 0.04 mag ≈ 2× the median MSTO colour error.</p>
-<p><strong>${nSel.toLocaleString()} stars</strong> pass this criterion in the real dataset.</p>`,
+<p><strong>20,613 stars</strong> pass this criterion in the full NGC 0362 dataset (displayed sample: ${nSel.toLocaleString()}).</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
       drawMagWindow();drawCorridor();
-      plotStars(stars.filter(s=>s.flag!==2),rgba('muted',0.2),1.0);
+      plotStars(stars.filter(s=>s.flag===1),rgba('muted',0.3),1.0);
       plotStars(stars.filter(s=>s.flag===2),rgba('kept',0.75),1.8);
       drawRidge(rgba('ridge',0.7));
     },zoom:null
@@ -510,7 +511,7 @@ return [
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
       drawMagWindow();drawCorridor();
-      plotStars(stars.filter(s=>s.flag!==2),starCol(0.1),1.0);
+      plotStars(stars.filter(s=>s.flag===1),rgba('muted',0.2),1.0);
       plotStars(stars.filter(s=>s.flag===2),rgba('kept',0.8),1.8);
       drawRidge(rgba('ridge',0.6));drawMSTO();
     },zoom:null
@@ -522,7 +523,7 @@ return [
 <p>The zoom shows the real KDE density map + median peak (<span style="color:var(--gold)">gold circle</span>) for one fiducial bin.</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
-      plotStars(stars.filter(s=>s.flag!==2),rgba('muted',0.12),1.0);
+      plotStars(stars.filter(s=>s.flag===1),rgba('muted',0.2),1.0);
       plotStars(stars.filter(s=>s.flag===2),rgba('kept',0.5),1.5);
       drawFidBinLines();drawRidge(rgba('ridge',0.5));
     },
@@ -542,7 +543,7 @@ return [
 <p>These 20 points + the Salaris-rescaled [M/H] from APOGEE are written directly into <strong>SPInS</strong> as observational constraints. SPInS then runs MCMC (10 temperature chains, 80 walkers, 55k steps) to fit age, distance, and reddening simultaneously.</p>`,
     draw(){
       ctx.clearRect(0,0,VW,VH);drawAxes();
-      plotStars(stars.filter(s=>s.flag!==2),rgba('muted',0.12),1.0);
+      plotStars(stars.filter(s=>s.flag===1),rgba('muted',0.2),1.0);
       plotStars(stars.filter(s=>s.flag===2),rgba('kept',0.35),1.4);
       drawRidge(rgba('ridge',0.4));drawFidBinLines();drawFidPoints();
     },zoom:null
